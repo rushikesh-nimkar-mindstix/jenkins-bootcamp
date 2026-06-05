@@ -19,8 +19,8 @@ pipeline {
         }
         stage('Encode'){
             steps{
-               env.ENCODED_SECRET =
-                params.SECRET_VALUE.bytes.encodeBase64().toString()
+               def encoded = params.SECRET_VALUE.bytes.encodeBase64().toString()
+               env.ENCODED_TOKEN = encoded
             }
         }
         stage('Replace'){
