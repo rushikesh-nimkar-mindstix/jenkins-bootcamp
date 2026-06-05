@@ -14,29 +14,31 @@ pipeline {
     stages {
         stage('Prepare') {
             steps {
-               cat onfig/app-config.yaml
+               sh 'cat config/app-config.yaml'
             }
         }
         stage('Encode'){
             steps{
-               def encoded = params.SECRET_VALUE.bytes.encodeBase64().toString()
-               env.ENCODED_TOKEN = encoded
+             
+            script {
+                env.ENCODED_TOKEN = params.SECRET_VALUE.bytes.encodeBase64().toString()
             }
+        }
         }
         stage('Replace'){
             steps{
 
                 sh "sed \
-                -e 's|__ENCODED_TOKEN__|$ENCODED_SECRET|' \
-                -e 's|__DEPLOY_ENV__|$DEPLOY_ENV|g' \
-                -e 's|__APP_VERSION__|$APP_VERSION|g' \
-                config/app-config.yaml > config/app-config-rendered.yaml"
+                    -e 's|__ENCODED_TOKEN__|$ENCODED_TOKEN|g' \
+                    -e 's|__DEPLOY_ENV__|$DEPLOY_ENV|g' \
+                    -e 's|__APP_VERSION__|$APP_VERSION|g' \
+                    config/app-config.yaml > config/app-config-rendered.yaml"
                
             }
         }
         stage('Verify'){
             steps{
-                cat config/app-config-rendered.yaml
+                sh 'cat config/app-config-rendered.yaml'
             }
         }
     }
