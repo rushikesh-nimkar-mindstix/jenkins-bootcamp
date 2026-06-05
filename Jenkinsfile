@@ -17,23 +17,26 @@ pipeline {
                sh 'cat config/app-config.yaml'
             }
         }
-        stage('Encode'){
-            steps{
-             
-            script {
-                env.ENCODED_TOKEN = params.SECRET_VALUE.bytes.encodeBase64().toString()
-            }
+        stage('Encode') {
+    steps {
+        script {
+            env.ENCODED_TOKEN = sh(
+                script: "echo -n '${params.SECRET_VALUE}' | base64",
+                returnStdout: true
+            ).trim()
         }
-        }
+    }
+}
         stage('Replace'){
             steps{
 
-                sh "sed \
-                    -e 's|__ENCODED_TOKEN__|$ENCODED_TOKEN|g' \
-                    -e 's|__DEPLOY_ENV__|$DEPLOY_ENV|g' \
-                    -e 's|__APP_VERSION__|$APP_VERSION|g' \
-                    config/app-config.yaml > config/app-config-rendered.yaml"
-               
+                sh """
+                    sed \
+                    -e "s|__ENCODED_TOKEN__|$ENCODED_TOKEN|g" \
+                    -e "s|__DEPLOY_ENV__|$DEPLOY_ENV|g" \
+                    -e "s|__APP_VERSION__|$APP_VERSION|g" \
+                    config/app-config.yaml > config/app-config-rendered.yaml
+                """
             }
         }
         stage('Verify'){
