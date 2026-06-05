@@ -1,0 +1,5 @@
+app:
+  name: jenkins-bootcamp
+  environment: __DEPLOY_ENV__
+  auth_token: __ENCODED_TOKEN__
+  version: __VERSION__
