@@ -1,12 +1,51 @@
-// pipeline {
-//     agent any
-//     stages {
-//         stage('Hello this is new message') {
-//             steps {
-//                 echo "Running from SCM — branch: ${env.GIT_BRANCH}"
-//                 echo "Commit: ${env.GIT_COMMIT}"
-//                 sh 'ls -la'
-//             }
-//         }
-//     }
-// }
+pipeline {
+    agent any
+    environment {
+        DEPLOY_ENV = "dev"
+        APP_VERSION = "1.0.0"   
+    }
+    parameters{
+        string(
+            name: 'SECRET_VALUE',
+            defaultValue: 'my-secret-token',
+            description: 'Secret Token Value'
+            )
+    }
+    stages {
+        stage('Prepare') {
+            steps {
+               cat onfig/app-config.yaml
+            }
+        }
+        stage('Encode'){
+            steps{
+               env.ENCODED_SECRET =
+                params.SECRET_VALUE.bytes.encodeBase64().toString()
+            }
+        }
+        stage('Replace'){
+            steps{
+
+                sh "sed \
+                -e 's|__ENCODED_TOKEN__|$ENCODED_SECRET|' \
+                -e 's|__DEPLOY_ENV__|$DEPLOY_ENV|g' \
+                -e 's|__APP_VERSION__|$APP_VERSION|g' \
+                config/app-config.yaml > config/app-config-rendered.yaml"
+               
+            }
+        }
+        stage('Verify'){
+            steps{
+                cat config/app-config-rendered.yaml
+            }
+        }
+    }
+    post{
+        success{
+            echo "Config rendered successfully."
+        } 
+        failure{
+            echo "Pipeline failed at stage: check console output."
+        }
+    }
+}
